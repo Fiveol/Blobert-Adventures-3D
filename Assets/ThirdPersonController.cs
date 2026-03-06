@@ -94,6 +94,7 @@ public class ThirdPersonController : MonoBehaviour
         if (!controller.isGrounded) return;
 
         verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        deathSFX.Play();
     }
 
     // Detect collision with Death layer
