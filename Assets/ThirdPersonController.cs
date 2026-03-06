@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(CharacterController))]
 public class ThirdPersonController : MonoBehaviour
@@ -15,6 +16,10 @@ public class ThirdPersonController : MonoBehaviour
 
     [Header("References")]
     public Transform cameraTransform;
+
+    [Header("Death Settings")]
+    public AudioSource deathSFX; // Assign your sound here in Inspector
+    public string sceneToReload; // Leave empty to reload current scene
 
     private CharacterController controller;
     private PlayerInputActions input;
@@ -51,7 +56,6 @@ public class ThirdPersonController : MonoBehaviour
 
     private void HandleMovement()
     {
-        // Camera-relative movement
         Vector3 forward = cameraTransform.forward;
         Vector3 right = cameraTransform.right;
 
@@ -67,7 +71,6 @@ public class ThirdPersonController : MonoBehaviour
 
         if (direction.magnitude >= 0.1f)
         {
-            // Rotate toward movement direction
             Quaternion targetRotation = Quaternion.LookRotation(direction);
             transform.rotation = Quaternion.Slerp(
                 transform.rotation,
@@ -76,7 +79,6 @@ public class ThirdPersonController : MonoBehaviour
             );
         }
 
-        // Apply gravity
         if (controller.isGrounded && verticalVelocity < 0)
             verticalVelocity = -2f;
 
@@ -92,5 +94,35 @@ public class ThirdPersonController : MonoBehaviour
         if (!controller.isGrounded) return;
 
         verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+    }
+
+    // Detect collision with Death layer
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Death"))
+        {
+            HandleDeath();
+        }
+    }
+
+    private void HandleDeath()
+    {
+        if (deathSFX != null)
+            deathSFX.Play();
+
+        // Delay reload slightly so SFX can play
+        Invoke(nameof(ReloadScene), 0.2f);
+    }
+
+    private void ReloadScene()
+    {
+        if (!string.IsNullOrEmpty(sceneToReload))
+        {
+            SceneManager.LoadScene(sceneToReload);
+        }
+        else
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
     }
 }
